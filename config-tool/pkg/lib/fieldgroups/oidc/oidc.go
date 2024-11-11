@@ -22,6 +22,7 @@ type OIDCProvider struct {
 	PreferredUsernameClaimName string        `default:"" validate:"" json:"PREFERRED_USERNAME_CLAIM_NAME,omitempty" yaml:"PREFERRED_USERNAME_CLAIM_NAME,omitempty"`
 	LoginScopes                []interface{} `default:"" validate:"" json:"LOGIN_SCOPES,omitempty" yaml:"LOGIN_SCOPES,omitempty"`
 	ServiceName                string        `default:"" validate:"" json:"SERVICE_NAME,omitempty" yaml:"SERVICE_NAME,omitempty"`
+	SkipConnectionTest         bool          `default:false validate:"" json:"SKIP_CONNECTION_TEST,omitempty" yaml:"SKIP_CONNECTION_TEST,omitempty"`
 }
 
 // NewOIDCFieldGroup creates a new OIDCFieldGroup
@@ -98,6 +99,12 @@ func NewOIDCProvider(prefix string, providerConfig map[string]interface{}) (*OID
 		newOIDCProvider.LoginScopes, ok = value.([]interface{})
 		if !ok {
 			return newOIDCProvider, errors.New("LOGIN_SCOPES must be of type string")
+		}
+	}
+	if value, ok := providerConfig["SKIP_CONNECTION_TEST"]; ok {
+		newOIDCProvider.SkipConnectionTest, ok = value.(bool)
+		if !ok {
+			return newOIDCProvider, errors.New("SKIP_CONNECTION_TEST must be of type bool")
 		}
 	}
 

@@ -47,7 +47,7 @@ func (fg *OIDCFieldGroup) Validate(opts shared.Options) []shared.ValidationError
 			continue
 		}
 
-		if ok, err := shared.ValidateOIDCServer(opts, provider.OIDCServer, provider.ClientID, provider.ClientSecret, provider.ServiceName, provider.LoginScopes, fgName); !ok {
+		if ok, err := shared.ValidateOIDCServer(opts, provider.OIDCServer, provider.ClientID, provider.ClientSecret, provider.ServiceName, provider.LoginScopes, fgName, provider.SkipConnectionTest); !ok {
 			errors = append(errors, err)
 		}
 

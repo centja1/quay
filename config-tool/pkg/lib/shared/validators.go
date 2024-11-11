@@ -906,7 +906,7 @@ func ValidateLDAPServer(opts Options, ldapUri, ldapAdminDn, ldapAdminPasswd, lda
 }
 
 // ValidateOIDCServer validates that the provided oidc server is valid
-func ValidateOIDCServer(opts Options, oidcServer, clientID, clientSecret, serviceName string, loginScopes []interface{}, fgName string) (bool, ValidationError) {
+func ValidateOIDCServer(opts Options, oidcServer, clientID, clientSecret, serviceName string, loginScopes []interface{}, fgName string, skipConnectionTest bool) (bool, ValidationError) {
 
 	// Create http client
 	config, err := GetTlsConfig(opts)
@@ -947,29 +947,31 @@ func ValidateOIDCServer(opts Options, oidcServer, clientID, clientSecret, servic
 		}
 	}
 
-	oauth2Config := oauth2.Config{
-		ClientID:     clientID,
-		ClientSecret: clientSecret,
-		Endpoint:     p.Endpoint(),
-		RedirectURL:  "http://quay/oauth2/auth0/callback",
-		Scopes:       InterfaceArrayToStringArray(loginScopes),
-	}
-
-	_, err = oauth2Config.Exchange(ctx, "badcode")
-	if err != nil {
-		if strings.Contains(err.Error(), "access_denied") {
-			return false, ValidationError{
-				Tags:       []string{"OIDC_SERVER"},
-				FieldGroup: fgName,
-				Message:    fmt.Sprintf("Incorrect credentials for OIDC %s", serviceName),
-			}
-		} else if strings.Contains(err.Error(), "invalid_grant") {
-			return true, ValidationError{} // this means we connected to the server correctly
-		} else {
-			return false, ValidationError{
-				Tags:       []string{"OIDC_SERVER"},
-				FieldGroup: fgName,
-				Message:    "Could not reach OIDC server " + serviceName + ". Error: " + err.Error(),
+	if !skipConnectionTest {
+		oauth2Config := oauth2.Config{
+			ClientID:     clientID,
+			ClientSecret: clientSecret,
+			Endpoint:     p.Endpoint(),
+			RedirectURL:  "http://quay/oauth2/auth0/callback",
+			Scopes:       InterfaceArrayToStringArray(loginScopes),
+		}
+	
+		_, err = oauth2Config.Exchange(ctx, "badcode")
+		if err != nil {
+			if strings.Contains(err.Error(), "access_denied") {
+				return false, ValidationError{
+					Tags:       []string{"OIDC_SERVER"},
+					FieldGroup: fgName,
+					Message:    fmt.Sprintf("Incorrect credentials for OIDC %s", serviceName),
+				}
+			} else if strings.Contains(err.Error(), "invalid_grant") {
+				return true, ValidationError{} // this means we connected to the server correctly
+			} else {
+				return false, ValidationError{
+					Tags:       []string{"OIDC_SERVER"},
+					FieldGroup: fgName,
+					Message:    "Could not reach OIDC server " + serviceName + ". Error: " + err.Error(),
+				}
 			}
 		}
 	}
